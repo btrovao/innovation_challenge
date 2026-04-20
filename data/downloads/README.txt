@@ -1,0 +1,3 @@
+Sample downloaded for MVP map/context (Portugal country outline).
+Source: world.geo.json (johan/world.geo.json) — PRT.geo.json
+Replace with official CAOP/INE boundaries or Copernicus EMS layers for production.

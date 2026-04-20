@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "region": "Portugal",
+    "source_note": "MVP illustrative hazard indices (0–1) derived from typical regional climate risks: coastal flood/storm surge (west coast), wildfire (interior), heat (south/interior), drought. Replace with IPMA, APA, Copernicus CEMS, or national atlas layers in production.",
+    "hazards": ["heat", "flood", "wildfire", "drought", "coastal_storm"],
+    "units": "normalized 0 = low, 1 = high exposure to hazard at municipality centroid"
+  },
+  "municipalities": [
+    {"id": "1106", "name": "Lisboa", "district": "Lisboa", "lat": 38.7223, "lon": -9.1393, "hazards": {"heat": 0.72, "flood": 0.45, "wildfire": 0.25, "drought": 0.35, "coastal_storm": 0.55}},
+    {"id": "1308", "name": "Porto", "district": "Porto", "lat": 41.1579, "lon": -8.6291, "hazards": {"heat": 0.55, "flood": 0.42, "wildfire": 0.38, "drought": 0.30, "coastal_storm": 0.48}},
+    {"id": "0605", "name": "Coimbra", "district": "Coimbra", "lat": 40.2033, "lon": -8.4103, "hazards": {"heat": 0.68, "flood": 0.55, "wildfire": 0.62, "drought": 0.48, "coastal_storm": 0.22}},
+    {"id": "0811", "name": "Faro", "district": "Faro", "lat": 37.0194, "lon": -7.9322, "hazards": {"heat": 0.85, "flood": 0.35, "wildfire": 0.58, "drought": 0.62, "coastal_storm": 0.42}},
+    {"id": "0402", "name": "Bragança", "district": "Bragança", "lat": 41.8058, "lon": -6.7572, "hazards": {"heat": 0.58, "flood": 0.38, "wildfire": 0.72, "drought": 0.55, "coastal_storm": 0.15}},
+    {"id": "1823", "name": "Viseu", "district": "Viseu", "lat": 40.6566, "lon": -7.9139, "hazards": {"heat": 0.65, "flood": 0.48, "wildfire": 0.68, "drought": 0.52, "coastal_storm": 0.18}},
+    {"id": "0505", "name": "Castelo Branco", "district": "Castelo Branco", "lat": 39.8222, "lon": -7.4931, "hazards": {"heat": 0.78, "flood": 0.42, "wildfire": 0.75, "drought": 0.68, "coastal_storm": 0.12}},
+    {"id": "0704", "name": "Évora", "district": "Évora", "lat": 38.5714, "lon": -7.9135, "hazards": {"heat": 0.88, "flood": 0.28, "wildfire": 0.55, "drought": 0.75, "coastal_storm": 0.10}},
+    {"id": "0312", "name": "Aveiro", "district": "Aveiro", "lat": 40.6405, "lon": -8.6538, "hazards": {"heat": 0.60, "flood": 0.52, "wildfire": 0.45, "drought": 0.38, "coastal_storm": 0.50}},
+    {"id": "0308", "name": "Leiria", "district": "Leiria", "lat": 39.7436, "lon": -8.8071, "hazards": {"heat": 0.70, "flood": 0.48, "wildfire": 0.65, "drought": 0.50, "coastal_storm": 0.38}},
+    {"id": "0810", "name": "Loulé", "district": "Faro", "lat": 37.1377, "lon": -8.0197, "hazards": {"heat": 0.82, "flood": 0.32, "wildfire": 0.52, "drought": 0.58, "coastal_storm": 0.40}},
+    {"id": "0105", "name": "Braga", "district": "Braga", "lat": 41.5454, "lon": -8.4265, "hazards": {"heat": 0.52, "flood": 0.40, "wildfire": 0.48, "drought": 0.35, "coastal_storm": 0.28}},
+    {"id": "1312", "name": "Vila Nova de Gaia", "district": "Porto", "lat": 41.1239, "lon": -8.6118, "hazards": {"heat": 0.54, "flood": 0.44, "wildfire": 0.36, "drought": 0.32, "coastal_storm": 0.46}},
+    {"id": "1114", "name": "Sintra", "district": "Lisboa", "lat": 38.8029, "lon": -9.3817, "hazards": {"heat": 0.68, "flood": 0.52, "wildfire": 0.48, "drought": 0.40, "coastal_storm": 0.42}},
+    {"id": "0914", "name": "Funchal", "district": "Madeira", "lat": 32.6669, "lon": -16.9241, "hazards": {"heat": 0.48, "flood": 0.58, "wildfire": 0.42, "drought": 0.25, "coastal_storm": 0.35}}
+  ]
+}

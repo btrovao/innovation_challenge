@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Climate risk — Portugal MVP</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Climate anticipatory action (Portugal)</h1>
+      <p>
+        Illustrative risk assessment by location and profile: local hazard, exposure,
+        sensitivity, and adaptive capacity. Measures follow the four pillars of
+        <strong>anticipatory action</strong>.
+      </p>
+      <p class="diagram-note">
+        <strong>Diagram:</strong> early warnings · immediate action · preparedness ·
+        climate adaptation — converging in an <strong>anticipatory action</strong> plan.
+      </p>
+    </header>
+
+    <main class="wrap">
+      <section class="card">
+        <h2>Location</h2>
+        <fieldset class="loc-mode">
+          <legend class="sr-only">Location mode</legend>
+          <p class="muted" style="margin-top: 0">
+            <strong>Local climate hazard:</strong> obtained by <strong>bilinear</strong>
+            sampling on the <strong>spatial grid</strong> (
+            <code>portugal_climate_grid.json</code>) — the same layers as on the map. Use exact
+            coordinates or the reference municipality centroid.
+          </p>
+          <label class="radio-line">
+            <input type="radio" name="locMode" id="locMode_map" value="map" checked />
+            Map coordinates (click or drag the marker)
+          </label>
+          <label class="radio-line">
+            <input type="radio" name="locMode" id="locMode_muni" value="municipality" />
+            Selected municipality centroid (same grid, sample at centroid)
+          </label>
+        </fieldset>
+
+        <div class="grid grid-2" style="margin-top: 1rem">
+          <div>
+            <label for="municipality">Municipality (reference / MVP sample)</label>
+            <select id="municipality"></select>
+            <p class="muted" style="margin-top: 0.5rem">
+              Changing the municipality centres the map on that centroid (reference). Climate
+              hazard always comes from the spatial grid, not legacy per-municipality values.
+            </p>
+          </div>
+          <div>
+            <label for="exampleProfile">Example profile</label>
+            <select id="exampleProfile"></select>
+            <p class="muted" style="margin-top: 0.5rem">
+              Fills questionnaire fields only (socio-economic, housing, health, etc.). Does
+              <strong>not</strong> change map location — set the point separately.
+            </p>
+          </div>
+        </div>
+
+        <div class="map-wrap">
+          <div id="map" class="map-container" role="application" aria-label="Portugal map"></div>
+          <p class="muted map-hint">
+            Click the map to set your location. Drag the marker to adjust. Basemap: OpenStreetMap
+            (internet required).
+            <strong>Layers</strong> control: top right (click to expand). <strong>Legend</strong>:
+            bottom left. Same <strong>grid-based</strong> hazard data as the calculation (visual
+            subsample). After <em>Calculate</em>, the rectangle shows the bilinear sample cell.
+            <button type="button" class="btn btn--small" id="btnGeolocate">Use my location</button>
+          </p>
+        </div>
+
+        <div class="grid grid-2 coord-grid">
+          <div>
+            <label for="lat">Latitude (°)</label>
+            <input type="number" id="lat" step="0.0001" min="-90" max="90" />
+          </div>
+          <div>
+            <label for="lon">Longitude (°)</label>
+            <input type="number" id="lon" step="0.0001" min="-180" max="180" />
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>User questionnaire</h2>
+        <div class="grid grid-2">
+          <div>
+            <label for="f_ageBand">Age</label>
+            <select id="f_ageBand">
+              <option value="18-34">18–34</option>
+              <option value="35-49">35–49</option>
+              <option value="50-64">50–64</option>
+              <option value="65+">65 or older</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_sex">Sex (optional)</label>
+            <select id="f_sex">
+              <option value="any">Prefer not to say</option>
+              <option value="f">Female</option>
+              <option value="m">Male</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_education">Education</label>
+            <select id="f_education">
+              <option value="basic">Basic</option>
+              <option value="secondary">Secondary</option>
+              <option value="higher">Higher</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_incomeBand">Household income (band)</label>
+            <select id="f_incomeBand">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_housingType">Housing type</label>
+            <select id="f_housingType">
+              <option value="apartment">Apartment</option>
+              <option value="house">House</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_floorLevel">Floor (relevant for heat / floods)</label>
+            <select id="f_floorLevel">
+              <option value="ground">Ground floor</option>
+              <option value="low">Low (1st–2nd)</option>
+              <option value="mid">Mid-level</option>
+              <option value="high">High / top floors</option>
+            </select>
+          </div>
+          <div>
+            <label class="checkbox-row"
+              ><input type="checkbox" id="f_hasAC" /> Air conditioning at home</label
+            >
+            <label class="checkbox-row"
+              ><input type="checkbox" id="f_hasCoolRoomAccess" /> Access to a cool room / day
+              centre / family</label
+            >
+          </div>
+          <div>
+            <label for="f_occupation">Occupation</label>
+            <select id="f_occupation">
+              <option value="indoor">Mostly indoor work</option>
+              <option value="outdoor">Outdoor work</option>
+              <option value="rural">Agriculture / forestry</option>
+              <option value="retired">Retired</option>
+            </select>
+            <label class="checkbox-row"
+              ><input type="checkbox" id="f_outdoorWork" /> Frequent outdoor exposure at work</label
+            >
+          </div>
+          <div>
+            <label class="checkbox-row"
+              ><input type="checkbox" id="f_livesAlone" /> Lives alone</label
+            >
+            <label for="f_socialSupport">Social support network</label>
+            <select id="f_socialSupport">
+              <option value="low">Weak</option>
+              <option value="medium">Moderate</option>
+              <option value="high">Strong</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_healthChronic">Health (household)</label>
+            <select id="f_healthChronic">
+              <option value="none">None relevant</option>
+              <option value="respiratory">Respiratory (e.g. asthma, COPD)</option>
+              <option value="cardiovascular">Cardiovascular</option>
+            </select>
+          </div>
+          <div>
+            <label for="f_mobility">Mobility</label>
+            <select id="f_mobility">
+              <option value="full">Full</option>
+              <option value="limited">Limited</option>
+            </select>
+          </div>
+          <div>
+            <label class="checkbox-row"
+              ><input type="checkbox" id="f_insurance" /> Multi-risk home insurance</label
+            >
+            <label for="f_digitalAccess">Digital access (alerts)</label>
+            <select id="f_digitalAccess">
+              <option value="basic">Basic</option>
+              <option value="good">Good (app, SMS, email)</option>
+            </select>
+          </div>
+        </div>
+        <p style="margin-top: 1.25rem">
+          <button type="button" class="btn" id="btnCompute">Calculate risk and measures</button>
+        </p>
+      </section>
+
+      <section class="card" id="results" hidden>
+        <h2>Result</h2>
+        <div class="score-row">
+          <span class="big-score" id="overallScore">—</span>
+          <span class="band" id="overallBand">—</span>
+        </div>
+        <p><strong id="locName"></strong></p>
+        <p class="muted" id="locCoords"></p>
+        <div id="interpDetail" class="interp-detail" hidden></div>
+        <h3 style="font-size: 1rem; margin-top: 1rem">Profile factors</h3>
+        <ul id="drivers"></ul>
+        <h3 style="font-size: 1rem; margin-top: 1rem">Risk by hazard (illustrative)</h3>
+        <div id="perHazard"></div>
+        <h3 style="font-size: 1rem; margin-top: 1.5rem">Anticipatory action plan</h3>
+        <p class="muted" style="margin-bottom: 1rem">
+          Suggested measures aligned with your main risks (sample; does not replace official
+          guidance).
+        </p>
+        <div id="anticipatory"></div>
+      </section>
+
+      <section class="card">
+        <h2>Project data files</h2>
+        <ul class="muted" style="margin: 0; padding-left: 1.2rem">
+          <li>
+            <code>data/climate_grids/portugal_climate_grid.json</code> — WGS84 grid of hazard bands
+            (default build: continental Portugal, Δφ/Δλ from the script). Produce from EURO-CORDEX
+            NetCDF with <code>scripts/eurocordex_to_app_grid.py</code> (see
+            <code>data/climate_grids/README.txt</code>); optional synthetic grid via
+            <code>scripts/generate_portugal_climate_grid.py</code>.
+          </li>
+          <li>
+            <code>data/portugal_municipalities_hazards.json</code> — legacy reference (municipality
+            list); the engine uses the grid.
+          </li>
+          <li><code>data/measures_library.json</code> — measure library</li>
+          <li><code>data/example_profiles.json</code> — demo profiles</li>
+          <li>
+            <code>data/downloads/PRT_world_geo_sample.geo.json</code> — Portugal outline (sample)
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      Portugal MVP demo. Use a local HTTP server to load JSON via
+      <code>fetch</code>: <code>python -m http.server 8080</code>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="data/embeddedData.js"></script>
+    <script src="js/climateGridSampler.js"></script>
+    <script src="js/riskEngine.js"></script>
+    <script src="js/hazardMapLayers.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

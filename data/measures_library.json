@@ -1,0 +1,15 @@
+{
+  "lanes": ["early_warnings", "early_action", "disaster_preparedness", "climate_adaptation"],
+  "measures": [
+    {"id": "ew-1", "lane": "early_warnings", "hazards": ["heat", "wildfire", "drought"], "title": "IPMA and municipal alerts", "desc": "Subscribe to IPMA weather warnings and your municipality’s channels (SMS/app)."},
+    {"id": "ew-2", "lane": "early_warnings", "hazards": ["flood", "coastal_storm"], "title": "Flood and coastal alerts", "desc": "Follow APA and Civil Protection warnings; set personal thresholds (e.g. cumulative rainfall)."},
+    {"id": "ea-1", "lane": "early_action", "hazards": ["heat"], "title": "48-hour heat plan", "desc": "Hydration, outdoor timing, cool spaces (day centres/AC), check in with your support network."},
+    {"id": "ea-2", "lane": "early_action", "hazards": ["wildfire"], "title": "Evacuation and safe routes", "desc": "Know alternate routes; keep fuel and documents ready; follow authority orders."},
+    {"id": "ea-3", "lane": "early_action", "hazards": ["flood"], "title": "Raise belongings and cut power", "desc": "Move items to upper floors; switch off electricity if water enters; do not walk or drive through flood water."},
+    {"id": "dp-1", "lane": "disaster_preparedness", "hazards": ["heat", "wildfire", "flood", "drought", "coastal_storm"], "title": "Emergency kit and contacts", "desc": "Water, medication, documents, charger, list of trusted contacts."},
+    {"id": "dp-2", "lane": "disaster_preparedness", "hazards": ["wildfire", "flood"], "title": "Insurance and inventory", "desc": "Review multi-risk cover; photograph belongings; store policies in the cloud."},
+    {"id": "ca-1", "lane": "climate_adaptation", "hazards": ["heat"], "title": "Improve home thermal comfort", "desc": "Shade windows, cross-ventilation, insulation; consider heat pump with available grants."},
+    {"id": "ca-2", "lane": "climate_adaptation", "hazards": ["flood", "coastal_storm"], "title": "Barriers and damp-proofing", "desc": "Non-return valves, raise critical equipment, drainage around the property."},
+    {"id": "ca-3", "lane": "climate_adaptation", "hazards": ["wildfire", "drought"], "title": "Support network and climate literacy", "desc": "Neighbourhood networks; Civil Protection training; save water during droughts."}
+  ]
+}
