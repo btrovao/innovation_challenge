@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Climate risk — Portugal MVP</title>
+    <title>Climate Change‑Me: personalised climate risk and actions</title>
     <link rel="stylesheet" href="styles.css" />
     <link
       rel="stylesheet"
@@ -12,28 +12,141 @@
     />
   </head>
   <body>
-    <header class="header">
-      <h1>Climate anticipatory action (Portugal)</h1>
-      <p>
-        Illustrative risk assessment by location and profile: local hazard, exposure,
-        sensitivity, and adaptive capacity. Measures follow the four pillars of
-        <strong>anticipatory action</strong>.
-      </p>
-      <p class="diagram-note">
-        <strong>Diagram:</strong> early warnings · immediate action · preparedness ·
-        climate adaptation — converging in an <strong>anticipatory action</strong> plan.
-      </p>
+    <header class="header hero">
+      <div class="hero__bg" aria-hidden="true"></div>
+      <div class="wrap hero__inner">
+        <div class="hero__top">
+          <div class="badge">Climate Change‑Me</div>
+          <div class="badge badge--ghost">NOVA IMS · Innovation Challenge 2026</div>
+          <div class="badge badge--ghost">Theme: Data Visionaries</div>
+        </div>
+
+        <h1>Climate Change‑Me</h1>
+        <p class="hero__lead">
+          Your location. Your profile. Your plan.
+          <br />
+          <strong>Climate Change‑Me</strong> turns climate signals and AI-driven vulnerability
+          profiling into a tailored risk snapshot and the measures to lower it, so you can act
+          <em>before</em> impacts escalate.
+        </p>
+
+        <div class="hero__questions" aria-label="Guiding questions">
+          <p class="hero__q">What does climate risk look like for <strong>me</strong> in my area?</p>
+          <p class="hero__q">How does my housing, health, and access to support change the risk?</p>
+          <p class="hero__q">Which measures reduce my risk the most <strong>right now</strong>?</p>
+        </div>
+
+        <div class="hero__cta">
+          <a class="btn" href="#demo">Get my tailored plan</a>
+          <a class="btn btn--ghost" href="#how">See the methodology</a>
+        </div>
+
+        <div class="hero__grid">
+          <div class="mini-card">
+            <div class="mini-card__kicker">Personalised</div>
+            <div class="mini-card__title">Built around you</div>
+            <div class="mini-card__body">
+              Tailors results using your location and profile factors that affect vulnerability.
+            </div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card__kicker">Global coverage</div>
+            <div class="mini-card__title">Works anywhere</div>
+            <div class="mini-card__body">
+              Designed for worldwide spatial climate datasets. This interface shows Portugal as an
+              example region.
+            </div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card__kicker">Action-first</div>
+            <div class="mini-card__title">Risk + measures</div>
+            <div class="mini-card__body">
+              Delivers a clear risk summary and a prioritised set of measures to reduce it.
+            </div>
+          </div>
+        </div>
+
+        <div class="diagram-note">
+          <strong>Anticipatory action:</strong> early warnings · immediate action · preparedness ·
+          climate adaptation, converging into a prioritised plan.
+        </div>
+      </div>
     </header>
 
     <main class="wrap">
+      <section class="card pitch" id="how">
+        <div class="pitch__head">
+          <h3 class="pitch__title">How it works</h3>
+          <p class="muted" style="margin: 0.25rem 0 0">
+            Data in, personal risk out, clear actions next.
+          </p>
+        </div>
+
+        <div class="axis" role="img" aria-label="Methodology axis diagram: data to hazard, hazard times exposure and vulnerability to risk, then measures.">
+          <div class="axis__rail" aria-hidden="true"></div>
+
+          <div class="axis__step">
+            <div class="axis__dot" aria-hidden="true"></div>
+            <div class="axis__card">
+              <div class="axis__label">1) Climate data</div>
+              <div class="axis__title">Hazard layers</div>
+              <div class="axis__text">Heat · Flood · Wildfire · Drought · Coastal storm</div>
+            </div>
+          </div>
+
+          <div class="axis__step">
+            <div class="axis__dot" aria-hidden="true"></div>
+            <div class="axis__card">
+              <div class="axis__label">2) Location input</div>
+              <div class="axis__title">Point sampling</div>
+              <div class="axis__text">Map point or centroid, sampled on the spatial grid</div>
+            </div>
+          </div>
+
+          <div class="axis__step">
+            <div class="axis__dot" aria-hidden="true"></div>
+            <div class="axis__card">
+              <div class="axis__label">3) Profile input</div>
+              <div class="axis__title">Exposure + vulnerability</div>
+              <div class="axis__text">Housing · Health · Mobility · Support · Access</div>
+            </div>
+          </div>
+
+          <div class="axis__step">
+            <div class="axis__dot axis__dot--accent" aria-hidden="true"></div>
+            <div class="axis__card axis__card--accent">
+              <div class="axis__label">4) Risk</div>
+              <div class="axis__title">Personal score</div>
+              <div class="axis__text">Overall risk + per-hazard drivers</div>
+            </div>
+          </div>
+
+          <div class="axis__step">
+            <div class="axis__dot" aria-hidden="true"></div>
+            <div class="axis__card">
+              <div class="axis__label">5) Anticipatory actions</div>
+              <div class="axis__title">Tailored measures</div>
+              <div class="axis__text">Early warnings · Action · Preparedness · Adaptation</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chips">
+          <span class="chip">Global-ready methodology</span>
+          <span class="chip">Explainable scoring</span>
+          <span class="chip">Risk anticipation</span>
+          <span class="chip">Preparedness & resilience</span>
+        </div>
+      </section>
+
       <section class="card">
-        <h2>Location</h2>
+        <h2 id="demo">Get your tailored plan</h2>
         <fieldset class="loc-mode">
           <legend class="sr-only">Location mode</legend>
           <p class="muted" style="margin-top: 0">
             <strong>Local climate hazard:</strong> obtained by <strong>bilinear</strong>
             sampling on the <strong>spatial grid</strong> (
-            <code>portugal_climate_grid.json</code>) — the same layers as on the map. Use exact
+            <code>portugal_climate_grid.json</code>) using the same layers shown on the map. Use exact
             coordinates or the reference municipality centroid.
           </p>
           <label class="radio-line">
@@ -48,7 +161,7 @@
 
         <div class="grid grid-2" style="margin-top: 1rem">
           <div>
-            <label for="municipality">Municipality (reference / MVP sample)</label>
+            <label for="municipality">Municipality (Portugal example)</label>
             <select id="municipality"></select>
             <p class="muted" style="margin-top: 0.5rem">
               Changing the municipality centres the map on that centroid (reference). Climate
@@ -60,7 +173,7 @@
             <select id="exampleProfile"></select>
             <p class="muted" style="margin-top: 0.5rem">
               Fills questionnaire fields only (socio-economic, housing, health, etc.). Does
-              <strong>not</strong> change map location — set the point separately.
+              <strong>not</strong> change map location. Set the point separately.
             </p>
           </div>
         </div>
@@ -205,10 +318,10 @@
       </section>
 
       <section class="card" id="results" hidden>
-        <h2>Result</h2>
+        <h2>Your risk & your measures</h2>
         <div class="score-row">
-          <span class="big-score" id="overallScore">—</span>
-          <span class="band" id="overallBand">—</span>
+          <span class="big-score" id="overallScore">0</span>
+          <span class="band" id="overallBand">Pending</span>
         </div>
         <p><strong id="locName"></strong></p>
         <p class="muted" id="locCoords"></p>
@@ -229,35 +342,33 @@
         <h2>Project data files</h2>
         <ul class="muted" style="margin: 0; padding-left: 1.2rem">
           <li>
-            <code>data/climate_grids/portugal_climate_grid.json</code> — WGS84 grid of hazard bands
-            (default build: continental Portugal, Δφ/Δλ from the script). Produce from EURO-CORDEX
-            NetCDF with <code>scripts/eurocordex_to_app_grid.py</code> (see
-            <code>data/climate_grids/README.txt</code>); optional synthetic grid via
-            <code>scripts/generate_portugal_climate_grid.py</code>.
+            <code>data/climate_grids/portugal_climate_grid.json</code>: WGS84 grid of hazard bands
+            (example region). Produce from spatial climate-model databases with
+            <code>scripts/eurocordex_to_app_grid.py</code> (see <code>data/climate_grids/README.txt</code>).
           </li>
           <li>
-            <code>data/portugal_municipalities_hazards.json</code> — legacy reference (municipality
+            <code>data/portugal_municipalities_hazards.json</code>: legacy reference (municipality
             list); the engine uses the grid.
           </li>
-          <li><code>data/measures_library.json</code> — measure library</li>
-          <li><code>data/example_profiles.json</code> — demo profiles</li>
+          <li><code>data/measures_library.json</code>: measure library</li>
+          <li><code>data/example_profiles.json</code>: demo profiles</li>
           <li>
-            <code>data/downloads/PRT_world_geo_sample.geo.json</code> — Portugal outline (sample)
+            <code>data/downloads/PRT_world_geo_sample.geo.json</code>: Portugal outline (sample)
           </li>
         </ul>
       </section>
     </main>
 
     <footer>
-      Portugal MVP demo. Use a local HTTP server to load JSON via
-      <code>fetch</code>: <code>python -m http.server 8080</code>
+      NOVA IMS Innovation Challenge 2026. Run locally with a simple HTTP server so JSON can load
+      via <code>fetch</code>: <code>python -m http.server 8080</code>
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src="data/embeddedData.js"></script>
-    <script src="js/climateGridSampler.js"></script>
-    <script src="js/riskEngine.js"></script>
-    <script src="js/hazardMapLayers.js"></script>
-    <script src="js/app.js"></script>
+    <script src="data/embeddedData.js?v=20260420b"></script>
+    <script src="js/climateGridSampler.js?v=20260420b"></script>
+    <script src="js/riskEngine.js?v=20260420b"></script>
+    <script src="js/hazardMapLayers.js?v=20260420b"></script>
+    <script src="js/app.js?v=20260420b"></script>
   </body>
 </html>

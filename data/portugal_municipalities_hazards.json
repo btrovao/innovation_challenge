@@ -1,7 +1,7 @@
 {
   "meta": {
     "region": "Portugal",
-    "source_note": "MVP illustrative hazard indices (0–1) derived from typical regional climate risks: coastal flood/storm surge (west coast), wildfire (interior), heat (south/interior), drought. Replace with IPMA, APA, Copernicus CEMS, or national atlas layers in production.",
+    "source_note": "Illustrative hazard indices (0–1) for the Portugal example region. Replace with official national layers or climate-model-derived extraction for operational use.",
     "hazards": ["heat", "flood", "wildfire", "drought", "coastal_storm"],
     "units": "normalized 0 = low, 1 = high exposure to hazard at municipality centroid"
   },

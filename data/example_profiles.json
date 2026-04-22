@@ -1,6 +1,28 @@
 {
   "profiles": [
     {
+      "id": "maximum-risk-stress",
+      "label": "Maximum risk stress-test profile",
+      "form": {
+        "ageBand": "65+",
+        "sex": "any",
+        "education": "basic",
+        "incomeBand": "low",
+        "housingType": "house",
+        "floorLevel": "ground",
+        "hasAC": false,
+        "hasCoolRoomAccess": false,
+        "occupation": "rural",
+        "outdoorWork": true,
+        "livesAlone": true,
+        "socialSupport": "low",
+        "healthChronic": "respiratory",
+        "mobility": "limited",
+        "insurance": false,
+        "digitalAccess": "basic"
+      }
+    },
+    {
       "id": "senior-respiratory-low",
       "label": "Older adult, low income, no AC, respiratory condition, limited mobility",
       "form": {

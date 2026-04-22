@@ -1,10 +1,11 @@
 /**
- * Portugal MVP — risk model: Risk_h ≈ Hazard_h × Exposure_h × Vulnerability_h
+ * Risk model: Risk_h ≈ Hazard_h × Exposure_h × Vulnerability_h
  * Vulnerability = w_s × Sensitivity + w_a × (1 - AdaptiveCapacity)
  */
 (function (global) {
   const W_S = 0.55;
   const W_A = 0.45;
+  const PROFILE_SPREAD = 2.0;
 
   function clamp(x, a, b) {
     return Math.max(a, Math.min(b, x));
@@ -69,15 +70,23 @@
   }
 
   function exposureDrought(form) {
-    let e = 0.4;
-    if (form.incomeBand === "low") e += 0.12;
-    if (form.occupation === "rural" || form.occupation === "outdoor") e += 0.1;
+    let e = 0.45;
+    if (form.incomeBand === "low") e += 0.22;
+    if (form.occupation === "rural" || form.occupation === "outdoor") e += 0.18;
+    if (form.mobility === "limited") e += 0.08;
+    if (form.livesAlone) e += 0.07;
+    if (!form.hasCoolRoomAccess) e += 0.08;
     return clamp(e, 0, 1);
   }
 
   function exposureCoastal(form) {
-    let e = 0.4;
-    if (form.floorLevel === "ground" || form.floorLevel === "low") e += 0.18;
+    let e = 0.42;
+    if (form.floorLevel === "ground" || form.floorLevel === "low") e += 0.3;
+    if (form.mobility === "limited") e += 0.12;
+    if (form.livesAlone) e += 0.08;
+    if (form.incomeBand === "low") e += 0.08;
+    if (!form.insurance) e += 0.06;
+    if (form.socialSupport === "low") e += 0.1;
     return clamp(e, 0, 1);
   }
 
@@ -99,14 +108,17 @@
     const sens = sensitivity(form);
     const adapt = adaptiveCapacity(form);
     const vuln = vulnerability(sens, adapt);
-    const r = hazardValue * exp * vuln;
+    // Expand profile impact around the midpoint so different profiles diverge more.
+    const expAdj = clamp(0.5 + (exp - 0.5) * PROFILE_SPREAD, 0, 1);
+    const vulnAdj = clamp(0.5 + (vuln - 0.5) * PROFILE_SPREAD, 0, 1);
+    const r = hazardValue * expAdj * vulnAdj;
     return {
       hazard: hazardKey,
       hazardScore: hazardValue,
-      exposure: exp,
+      exposure: expAdj,
       sensitivity: sens,
       adaptiveCapacity: adapt,
-      vulnerability: vuln,
+      vulnerability: vulnAdj,
       risk: clamp(r, 0, 1),
     };
   }
@@ -116,9 +128,8 @@
     const keys = Object.keys(hazards);
     const perHazard = keys.map((k) => riskForHazard(k, hazards[k], form));
     perHazard.sort((a, b) => b.risk - a.risk);
-    const weights = perHazard.map((p) => p.risk);
-    const sumW = weights.reduce((a, b) => a + b, 0) || 1;
-    const overall = perHazard.reduce((acc, p, i) => acc + (p.risk * weights[i]) / sumW, 0);
+    const n = perHazard.length || 1;
+    const overall = perHazard.reduce((acc, p) => acc + p.risk, 0) / n;
     return {
       municipality,
       perHazard,

@@ -21,10 +21,10 @@
     climate_adaptation: "#db2777",
   };
 
-  /** Approximate bounds: mainland + islands (MVP) */
+  /** Approximate bounds for the Portugal example region */
   const PT_BOUNDS = [
-    [29.8, -31.6],
-    [43.8, -5.5],
+    [36.824083, -9.526571],
+    [42.280469, -6.034389],
   ];
 
   let map;
@@ -79,7 +79,10 @@
   }
 
   function municipalityList() {
-    return window.PORTUGAL_MVP_DATA.municipalities.list;
+    return window.PORTUGAL_MVP_DATA.municipalities.list.filter((m) => {
+      const [sw, ne] = PT_BOUNDS;
+      return m.lat >= sw[0] && m.lat <= ne[0] && m.lon >= sw[1] && m.lon <= ne[1];
+    });
   }
 
   function municipalityById(id) {
@@ -113,7 +116,7 @@
     const sel = $("exampleProfile");
     const ps = window.EXAMPLE_PROFILES.profiles;
     sel.innerHTML =
-      '<option value="">— Custom profile —</option>' +
+      '<option value="">Custom profile</option>' +
       ps.map((p) => `<option value="${p.id}">${p.label}</option>`).join("");
   }
 
@@ -205,9 +208,6 @@
             collapsed: true,
           })
           .addTo(map);
-        if (haz.groupsByKey.heat) {
-          haz.groupsByKey.heat.addTo(map);
-        }
       }
     }
 
@@ -324,17 +324,17 @@
     const mun = result.municipality;
     const modeHint =
       mun.locationSource === "map"
-        ? "Climate hazard at point: bilinear sample on the spatial grid (file-based)."
-        : "Climate hazard at municipality centroid: same spatial grid.";
+        ? "Tailored to your coordinates: hazards are sampled from the spatial climate grid."
+        : "Tailored to the selected centroid: hazards are sampled from the same spatial grid.";
     $("locName").textContent =
       mun.locationSource === "map"
-        ? "Map point"
+        ? "Your selected location"
         : mun.name + " · " + mun.district;
     $("locCoords").textContent =
       mun.lat.toFixed(5) +
       "°, " +
       mun.lon.toFixed(5) +
-      "° (WGS84) — " +
+      "° (WGS84) | " +
       modeHint;
 
     const interpEl = $("interpDetail");
@@ -439,7 +439,7 @@
                   `<li><strong>${m.title}</strong><br/><span class="muted">${m.desc}</span></li>`
               )
               .join("")}
-            ${items.length === 0 ? '<li class="muted">No specific measures for your top risks in this lane — see other lanes.</li>' : ""}
+            ${items.length === 0 ? '<li class="muted">No specific measures for your top risks in this lane. See other lanes.</li>' : ""}
           </ul>
         </section>
       `;
@@ -479,7 +479,7 @@
       }
       lat = p.lat;
       lon = p.lon;
-      name = "Map point";
+      name = "Your selected location";
       district = "Climate spatial grid";
       locSource = "map";
       id = "grid-point";
@@ -537,7 +537,7 @@
     $("btnGeolocate").addEventListener("click", onGeolocate);
     $("municipality").value = "1106";
 
-    fetch("data/climate_grids/portugal_climate_grid.json")
+    fetch("data/climate_grids/portugal_climate_grid.json?v=20260420c")
       .then(function (r) {
         if (!r.ok) throw new Error("grid");
         return r.json();
