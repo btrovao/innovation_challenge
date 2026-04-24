@@ -518,6 +518,13 @@
 
     const result = window.RiskEnginePT.computeAll(locationModel, form);
     renderResults(result);
+
+    // Persist calculation for statistics/BI purposes (local-only).
+    if (window.AnalyticsStore && window.AnalyticsStore.isAvailable && window.AnalyticsStore.isAvailable()) {
+      try {
+        window.AnalyticsStore.logComputation(locationModel, form, result);
+      } catch (e) {}
+    }
   }
 
   function onProfileChange() {
@@ -536,6 +543,13 @@
     $("municipality").addEventListener("change", onMunicipalityChange);
     $("btnGeolocate").addEventListener("click", onGeolocate);
     $("municipality").value = "1106";
+
+    // BI dashboard wiring (safe if not present).
+    if (window.BIDashboard && typeof window.BIDashboard.bind === "function") {
+      try {
+        window.BIDashboard.bind();
+      } catch (e) {}
+    }
 
     fetch("data/climate_grids/portugal_climate_grid.json?v=20260420c")
       .then(function (r) {
