@@ -106,6 +106,21 @@ body {
   max-width: 60rem;
 }
 
+.hero__insight {
+  margin-top: 0.9rem;
+  max-width: 60rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(15, 23, 42, 0.22);
+  color: rgba(241, 245, 249, 0.88);
+  font-size: 0.95rem;
+}
+
+.hero__insight strong {
+  color: #7dd3fc;
+}
+
 .hero__q {
   margin: 0;
   padding-left: 0.85rem;
@@ -636,6 +651,58 @@ footer {
 .btn--small {
   padding: 0.35rem 0.75rem;
   font-size: 0.85rem;
+}
+
+.bi-cta {
+  margin: 0.75rem 0 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: radial-gradient(
+      700px 240px at 18% 30%,
+      rgba(56, 189, 248, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(520px 220px at 82% 40%, rgba(20, 184, 166, 0.16), transparent 60%),
+    rgba(15, 23, 42, 0.25);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
+}
+
+.bi-cta__title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: rgba(241, 245, 249, 0.94);
+  margin-bottom: 0.2rem;
+}
+
+.bi-cta__text {
+  font-size: 0.88rem;
+  color: rgba(241, 245, 249, 0.82);
+}
+
+.bi-cta__actions {
+  margin-top: 0.65rem;
+}
+
+.btn--pulse {
+  animation: ccmPulse 900ms ease-in-out 2;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14), 0 12px 26px rgba(0, 0, 0, 0.18) !important;
+}
+
+@keyframes ccmPulse {
+  0% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+  100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
 }
 
 .coord-grid {

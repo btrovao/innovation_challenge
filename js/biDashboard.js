@@ -288,7 +288,7 @@
   }
 
   function bind() {
-    const btnShow = $("btnShowBI");
+    const btnShow = $("btnShowBI2");
     const sec = $("bi");
     if (btnShow && sec) {
       btnShow.addEventListener("click", function () {
@@ -327,6 +327,38 @@
         if (!global.AnalyticsStore) return;
         const data = global.AnalyticsStore.exportJson();
         downloadJson("climate-change-me_analytics.json", data);
+      });
+    }
+
+    const importEl = $("biImportFile");
+    if (importEl) {
+      importEl.addEventListener("change", function () {
+        const file = importEl.files && importEl.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const parsed = JSON.parse(String(reader.result || "[]"));
+            if (!global.AnalyticsStore || !global.AnalyticsStore.importMerge) return;
+            const r = global.AnalyticsStore.importMerge(parsed);
+            if (!r || !r.ok) {
+              alert("Import failed. Please select a valid exported analytics JSON file.");
+              return;
+            }
+            alert(`Imported ${r.added} new events. Total events: ${r.total}.`);
+            render();
+          } catch (e) {
+            alert("Import failed. Please select a valid exported analytics JSON file.");
+          } finally {
+            // allow re-importing the same file
+            importEl.value = "";
+          }
+        };
+        reader.onerror = function () {
+          alert("Could not read the selected file.");
+          importEl.value = "";
+        };
+        reader.readAsText(file);
       });
     }
 

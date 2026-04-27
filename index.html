@@ -36,6 +36,11 @@
           <p class="hero__q">Which measures reduce my risk the most <strong>right now</strong>?</p>
         </div>
 
+        <div class="hero__insight" role="note">
+          After you calculate your risk, you can explore <strong>platform-wide statistics</strong>
+          (timeline, distributions, and profile breakdowns) built from saved assessments.
+        </div>
+
         <div class="hero__cta">
           <a class="btn" href="#demo">Get my tailored plan</a>
           <a class="btn btn--ghost" href="#how">See the methodology</a>
@@ -323,14 +328,20 @@
           <span class="big-score" id="overallScore">0</span>
           <span class="band" id="overallBand">Pending</span>
         </div>
-        <p style="margin: 0.25rem 0 0.75rem">
-          <button type="button" class="btn btn--ghost btn--small" id="btnShowBI">
-            View statistics dashboard (BI)
-          </button>
-        </p>
+        <div class="bi-cta" id="biCta" hidden>
+          <div class="bi-cta__title">See the bigger picture</div>
+          <div class="bi-cta__text">
+            Explore the <strong>general statistics</strong> from saved calculations (distributions,
+            profile breakdowns, timeline).
+          </div>
+          <div class="bi-cta__actions">
+            <button type="button" class="btn btn--ghost btn--small" id="btnShowBI2">
+              Open statistics dashboard
+            </button>
+          </div>
+        </div>
         <p><strong id="locName"></strong></p>
         <p class="muted" id="locCoords"></p>
-        <div id="interpDetail" class="interp-detail" hidden></div>
         <h3 style="font-size: 1rem; margin-top: 1rem">Profile factors</h3>
         <ul id="drivers"></ul>
         <h3 style="font-size: 1rem; margin-top: 1rem">Risk by hazard (illustrative)</h3>
@@ -441,59 +452,33 @@
           <div id="biProfileDist" class="bi-bars" style="margin-top: 0.65rem"></div>
         </div>
 
-        <div style="margin-top: 1rem">
-          <h3 class="bi-subtitle">Top risk events</h3>
-          <div class="bi-table">
-            <div class="bi-table__head">
-              <div>Timestamp</div>
-              <div>Source</div>
-              <div>Location</div>
-              <div>Lat/Lon</div>
-              <div class="bi-right">Overall</div>
-              <div class="bi-right">Heat</div>
-              <div class="bi-right">Flood</div>
-              <div class="bi-right">Fire</div>
-              <div class="bi-right">Drought</div>
-              <div class="bi-right">Coast</div>
-            </div>
-            <div id="biTop"></div>
-          </div>
-        </div>
-
         <div class="bi-actions">
           <button type="button" class="btn btn--ghost btn--small" id="btnExportAnalytics">
             Export JSON
           </button>
+          <label class="btn btn--ghost btn--small" for="biImportFile">
+            Import / merge JSON
+          </label>
+          <input
+            type="file"
+            id="biImportFile"
+            accept="application/json"
+            style="display: none"
+          />
           <button type="button" class="btn btn--ghost btn--small" id="btnClearAnalytics">
             Clear local logs
           </button>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Project data files</h2>
-        <ul class="muted" style="margin: 0; padding-left: 1.2rem">
-          <li>
-            <code>data/climate_grids/portugal_climate_grid.json</code>: WGS84 grid of hazard bands
-            (example region). Produce from spatial climate-model databases with
-            <code>scripts/eurocordex_to_app_grid.py</code> (see <code>data/climate_grids/README.txt</code>).
-          </li>
-          <li>
-            <code>data/portugal_municipalities_hazards.json</code>: legacy reference (municipality
-            list); the engine uses the grid.
-          </li>
-          <li><code>data/measures_library.json</code>: measure library</li>
-          <li><code>data/example_profiles.json</code>: demo profiles</li>
-          <li>
-            <code>data/downloads/PRT_world_geo_sample.geo.json</code>: Portugal outline (sample)
-          </li>
-        </ul>
-      </section>
+      <!-- Methodology + technical file details moved to README.md to keep the UI pitch-focused. -->
     </main>
 
     <footer>
       NOVA IMS Innovation Challenge 2026. Run locally with a simple HTTP server so JSON can load
       via <code>fetch</code>: <code>python -m http.server 8080</code>
+      <br />
+      <a href="readme.html" class="muted">Methodology & technical notes (README)</a>
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>

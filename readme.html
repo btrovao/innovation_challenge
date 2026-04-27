@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Climate Change‑Me — Methodology (README)</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .md-wrap {
+        max-width: 980px;
+        margin: 2rem auto 3rem;
+        padding: 0 1rem;
+      }
+      .md-card {
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(30, 41, 59, 0.72));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(6px);
+      }
+      .md-topbar {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      .md-topbar a {
+        color: rgba(241, 245, 249, 0.92);
+        text-decoration: none;
+      }
+      .md-topbar a:hover {
+        text-decoration: underline;
+      }
+      .markdown-body h1,
+      .markdown-body h2,
+      .markdown-body h3 {
+        letter-spacing: -0.01em;
+      }
+      .markdown-body h1 {
+        margin-top: 0;
+      }
+      .markdown-body a {
+        color: #38bdf8;
+      }
+      .markdown-body p,
+      .markdown-body li {
+        color: rgba(241, 245, 249, 0.9);
+      }
+      .markdown-body code {
+        background: rgba(51, 65, 85, 0.7);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      .markdown-body pre {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(226, 232, 240, 0.12);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        overflow: auto;
+      }
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .markdown-body hr {
+        border: none;
+        border-top: 1px solid rgba(226, 232, 240, 0.14);
+        margin: 1.25rem 0;
+      }
+      .md-error {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(234, 88, 12, 0.35);
+        background: rgba(234, 88, 12, 0.12);
+        color: rgba(241, 245, 249, 0.92);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="md-wrap">
+      <div class="md-topbar">
+        <div>
+          <span class="badge">Climate Change‑Me</span>
+          <span class="badge badge--ghost">Methodology</span>
+        </div>
+        <a class="btn btn--ghost btn--small" href="index.html">Back to app</a>
+      </div>
+
+      <div class="md-card">
+        <div id="md" class="markdown-body">
+          <p class="muted">Loading README…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown renderer (client-side). -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      (function () {
+        function setHtml(html) {
+          document.getElementById("md").innerHTML = html;
+        }
+
+        fetch("README.md", { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("readme");
+            return r.text();
+          })
+          .then(function (md) {
+            if (typeof marked === "undefined") {
+              setHtml(
+                '<div class="md-error"><strong>Markdown renderer unavailable.</strong> You can still read the raw file at <a href="README.md">README.md</a>.</div>'
+              );
+              return;
+            }
+            setHtml(marked.parse(md));
+          })
+          .catch(function () {
+            setHtml(
+              '<div class="md-error"><strong>Could not load README.md.</strong> You can still try the raw file at <a href="README.md">README.md</a>.</div>'
+            );
+          });
+      })();
+    </script>
+  </body>
+</html>
+

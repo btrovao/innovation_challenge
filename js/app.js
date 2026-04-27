@@ -321,6 +321,22 @@
     $("overallBand").textContent = b.label;
     $("overallBand").className = "band band--" + b.key;
 
+    // Highlight BI/statistics access after each calculation.
+    const biCta = $("biCta");
+    if (biCta) biCta.hidden = false;
+    const biBtn = $("btnShowBI2");
+    if (biBtn) {
+      biBtn.classList.remove("btn--pulse");
+      // Force reflow so animation restarts reliably.
+      void biBtn.offsetWidth;
+      biBtn.classList.add("btn--pulse");
+      setTimeout(() => {
+        try {
+          biBtn.classList.remove("btn--pulse");
+        } catch (e) {}
+      }, 2200);
+    }
+
     const mun = result.municipality;
     const modeHint =
       mun.locationSource === "map"
@@ -336,56 +352,6 @@
       mun.lon.toFixed(5) +
       "° (WGS84) | " +
       modeHint;
-
-    const interpEl = $("interpDetail");
-    const cs = mun.climateSampling;
-    if (cs && cs.cell_bounds) {
-      interpEl.hidden = false;
-      const bounds = cs.cell_bounds;
-      const methodology =
-        cs.methodology ||
-        cs.methodology_pt ||
-        "Bilinear interpolation using the cell and its immediate neighbours on the grid.";
-      interpEl.innerHTML =
-        '<p class="interp-title">Spatial sampling (gridded database)</p>' +
-        '<p class="muted small">' +
-        methodology +
-        "</p>" +
-        '<ul class="interp-neighbors">' +
-        "<li><strong>Method:</strong> " +
-        cs.method +
-        " (" +
-        (cs.spatial_database || "gridded stack") +
-        ")</li>" +
-        "<li><strong>Grid resolution:</strong> Δφ = " +
-        cs.grid_dy_deg +
-        "°, Δλ = " +
-        cs.grid_dx_deg +
-        "°</li>" +
-        "<li><strong>Cell (indices):</strong> row " +
-        cs.cell_i0 +
-        ", column " +
-        cs.cell_j0 +
-        "</li>" +
-        "<li><strong>Bilinear weights:</strong> t_row = " +
-        (Math.round(cs.bilinear_t_row * 1000) / 1000) +
-        ", t_col = " +
-        (Math.round(cs.bilinear_t_col * 1000) / 1000) +
-        "</li>" +
-        "<li><strong>Cell extent (WGS84):</strong> φ [" +
-        bounds.south.toFixed(3) +
-        "°, " +
-        bounds.north.toFixed(3) +
-        "°], λ [" +
-        bounds.west.toFixed(3) +
-        "°, " +
-        bounds.east.toFixed(3) +
-        "°]</li>" +
-        "</ul>";
-    } else {
-      interpEl.hidden = true;
-      interpEl.innerHTML = "";
-    }
 
     const drivers = $("drivers");
     drivers.innerHTML = `
@@ -550,6 +516,7 @@
         window.BIDashboard.bind();
       } catch (e) {}
     }
+    // Stats dashboard open button lives in the results callout.
 
     fetch("data/climate_grids/portugal_climate_grid.json?v=20260420c")
       .then(function (r) {

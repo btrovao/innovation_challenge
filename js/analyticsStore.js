@@ -148,12 +148,69 @@
     return loadEvents();
   }
 
+  function fingerprint(ev) {
+    // Stable-ish key for dedupe when importing/exporting across sessions.
+    const loc = (ev && ev.loc) || {};
+    const haz = (ev && ev.hazards) || {};
+    const res = (ev && ev.result) || {};
+    return [
+      ev && ev.ts,
+      ev && ev.sessionId,
+      loc.id,
+      loc.source,
+      loc.lat,
+      loc.lon,
+      res.overall,
+      haz.heat,
+      haz.flood,
+      haz.wildfire,
+      haz.drought,
+      haz.coastal_storm,
+    ].join("|");
+  }
+
+  function importMerge(importedEvents) {
+    if (!hasStorage()) return { ok: false, added: 0, total: 0, error: "no-storage" };
+    if (!Array.isArray(importedEvents))
+      return { ok: false, added: 0, total: loadEvents().length, error: "invalid-format" };
+
+    const current = loadEvents();
+    const seen = new Set(current.map(fingerprint));
+    let added = 0;
+
+    for (let i = 0; i < importedEvents.length; i++) {
+      const ev = importedEvents[i];
+      if (!ev || typeof ev !== "object") continue;
+      if (typeof ev.ts !== "string") continue;
+      const key = fingerprint(ev);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      current.push(ev);
+      added += 1;
+    }
+
+    if (current.length > MAX_EVENTS) {
+      current.splice(0, current.length - MAX_EVENTS);
+    }
+
+    const ok = saveEvents(current);
+    if (ok) {
+      try {
+        global.dispatchEvent(
+          new CustomEvent("ccm:analytics_updated", { detail: { count: current.length } })
+        );
+      } catch (e) {}
+    }
+    return { ok, added, total: current.length };
+  }
+
   global.AnalyticsStore = {
     isAvailable: hasStorage,
     loadEvents,
     logComputation,
     clear,
     exportJson,
+    importMerge,
     getSessionId,
   };
 })(typeof window !== "undefined" ? window : globalThis);
