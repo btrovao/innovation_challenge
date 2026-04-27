@@ -1,5 +1,6 @@
-# Serve over HTTP (required for fetch-based loading)
+# Serve over HTTP (required for fetch-based loading) + global analytics API
 Set-Location $PSScriptRoot
 $port = 8080
-Write-Host "Serving http://localhost:$port/ — press Ctrl+C to stop"
-python -m http.server $port
+Write-Host ("Serving http://localhost:{0}/ - press Ctrl+C to stop" -f $port)
+$env:PORT = $port
+python server.py

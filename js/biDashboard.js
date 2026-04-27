@@ -1,6 +1,6 @@
 /**
- * BI-style dashboard for client-side analytics events.
- * Reads from window.AnalyticsStore and renders into #bi elements in index.html.
+ * BI-style dashboard for platform-wide analytics events.
+ * Fetches from the server API (/api/events) and renders into #bi elements in index.html.
  */
 (function (global) {
   function $(id) {
@@ -26,6 +26,14 @@
     { key: "digitalAccess", label: "Digital access (alerts)" },
   ];
 
+  const RISK_BUCKETS = [
+    { key: "0-0.2", label: "0–0.2", a: 0.0, b: 0.2 },
+    { key: "0.2-0.4", label: "0.2–0.4", a: 0.2, b: 0.4 },
+    { key: "0.4-0.6", label: "0.4–0.6", a: 0.4, b: 0.6 },
+    { key: "0.6-0.8", label: "0.6–0.8", a: 0.6, b: 0.8 },
+    { key: "0.8-1.0", label: "0.8–1.0", a: 0.8, b: 1.0000001 },
+  ];
+
   function fmtPct(x) {
     if (typeof x !== "number" || Number.isNaN(x)) return "—";
     return (x * 100).toFixed(0) + "%";
@@ -48,41 +56,17 @@
     return `${y}-${m}-${dd}`;
   }
 
-  function bucketOverall(v) {
-    if (v == null) return "unknown";
-    if (v < 0.22) return "Low";
-    if (v < 0.42) return "Medium";
-    if (v < 0.62) return "High";
-    return "Very high";
-  }
-
   function computeAgg(events) {
     const n = events.length;
-    const byDay = {};
-    const bySource = {};
-    const byBand = {};
 
     let sumOverall = 0;
     let sumSens = 0;
     let sumAdapt = 0;
     let countWithOverall = 0;
 
-    let top = [];
-
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
-      const d = parseTs(e.ts);
-      if (d) {
-        const k = dayKey(d);
-        byDay[k] = (byDay[k] || 0) + 1;
-      }
-      const src = (e.loc && e.loc.source) || "unknown";
-      bySource[src] = (bySource[src] || 0) + 1;
-
       const overall = e.result && typeof e.result.overall === "number" ? e.result.overall : null;
-      const band = bucketOverall(overall);
-      byBand[band] = (byBand[band] || 0) + 1;
-
       if (typeof overall === "number") {
         sumOverall += overall;
         countWithOverall += 1;
@@ -92,38 +76,13 @@
       const adapt =
         e.result && typeof e.result.adaptiveCapacity === "number" ? e.result.adaptiveCapacity : null;
       if (typeof adapt === "number") sumAdapt += adapt;
-
-      // Keep a small list of top events by overall risk.
-      if (typeof overall === "number") {
-        top.push({ overall, e });
-      }
     }
-
-    top.sort((a, b) => b.overall - a.overall);
-    top = top.slice(0, 12);
 
     const avgOverall = countWithOverall ? sumOverall / countWithOverall : null;
     const avgSens = n ? sumSens / n : null;
     const avgAdapt = n ? sumAdapt / n : null;
 
-    return { n, avgOverall, avgSens, avgAdapt, byDay, bySource, byBand, top };
-  }
-
-  function renderBars(container, rows, max) {
-    container.innerHTML = rows
-      .map((r) => {
-        const w = max ? Math.round((r.value / max) * 100) : 0;
-        const note = r.note ? `<div class="bi-row__note">${r.note}</div>` : "";
-        return `
-          <div class="bi-row">
-            <div class="bi-row__k">${r.label}</div>
-            <div class="bi-row__bar"><div class="bi-row__barFill" style="width:${w}%"></div></div>
-            <div class="bi-row__v">${r.value}</div>
-            ${note}
-          </div>
-        `;
-      })
-      .join("");
+    return { n, avgOverall, avgSens, avgAdapt };
   }
 
   function profileValueToCategory(v) {
@@ -133,245 +92,215 @@
     return String(v);
   }
 
-  function computeProfileBreakdown(events, fieldKey) {
-    const buckets = {};
+  function clamp01(x) {
+    if (typeof x !== "number" || Number.isNaN(x)) return null;
+    return Math.max(0, Math.min(1, x));
+  }
+
+  function bucketIndex01(x01) {
+    if (typeof x01 !== "number") return null;
+    for (let i = 0; i < RISK_BUCKETS.length; i++) {
+      const b = RISK_BUCKETS[i];
+      if (x01 >= b.a && x01 < b.b) return i;
+    }
+    return RISK_BUCKETS.length - 1;
+  }
+
+  function emptyBucketCounts() {
+    return new Array(RISK_BUCKETS.length).fill(0);
+  }
+
+  function riskDictFromEvent(e) {
+    const out = {
+      overall: clamp01(e && e.result && e.result.overall),
+      heat: null,
+      flood: null,
+      wildfire: null,
+      drought: null,
+      coastal_storm: null,
+    };
+    const ph = (e && e.result && e.result.perHazard) || [];
+    for (let i = 0; i < ph.length; i++) {
+      const r = ph[i];
+      if (!r || typeof r.hazard !== "string") continue;
+      if (typeof r.risk !== "number") continue;
+      if (Object.prototype.hasOwnProperty.call(out, r.hazard)) {
+        out[r.hazard] = clamp01(r.risk);
+      }
+    }
+    return out;
+  }
+
+  function renderStackedRow(label, counts) {
+    const total = counts.reduce((a, b) => a + b, 0) || 0;
+    const segs = counts
+      .map((c, idx) => {
+        const w = total ? (c / total) * 100 : 0;
+        const pct = total ? Math.round((c / total) * 100) : 0;
+        const bucket = RISK_BUCKETS[idx] ? RISK_BUCKETS[idx].label : "";
+        const title = `${bucket}: ${c} (${pct}%)`;
+        return `<div class="bi-seg bi-seg--${idx}" style="width:${w}%" title="${title}"></div>`;
+      })
+      .join("");
+    const legend = RISK_BUCKETS.map((b) => `<span class="bi-legend__item">${b.label}</span>`).join(
+      ""
+    );
+    const nums = counts
+      .map((c) => `<span class="bi-stackRow__num">${c}</span>`)
+      .join("");
+    return `
+      <div class="bi-stackRow">
+        <div class="bi-stackRow__k">${label}</div>
+        <div class="bi-stackRow__mid">
+          <div class="bi-stackRow__bar" role="img" aria-label="${label} risk intervals">${segs}</div>
+          <div class="bi-stackRow__nums" aria-hidden="true">${nums}</div>
+        </div>
+        <div class="bi-stackRow__v">${total}</div>
+        <div class="bi-legend">${legend}</div>
+      </div>
+    `;
+  }
+
+  function computeIntervals(events) {
+    const keys = ["overall", "heat", "flood", "wildfire", "drought", "coastal_storm"];
+    const out = {};
+    keys.forEach((k) => (out[k] = emptyBucketCounts()));
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      const rd = riskDictFromEvent(e);
+      keys.forEach((k) => {
+        const v = rd[k];
+        const bi = bucketIndex01(v);
+        if (bi == null) return;
+        out[k][bi] += 1;
+      });
+    }
+    return out;
+  }
+
+  function computeProfileIntervalPlot(events, fieldKey) {
+    const byCat = {};
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
       const p = e.profile || {};
       const cat = profileValueToCategory(p[fieldKey]);
-      if (!buckets[cat]) buckets[cat] = { count: 0, sumOverall: 0, nOverall: 0 };
-      buckets[cat].count += 1;
-      const o = e.result && typeof e.result.overall === "number" ? e.result.overall : null;
-      if (typeof o === "number") {
-        buckets[cat].sumOverall += o;
-        buckets[cat].nOverall += 1;
-      }
+      if (!byCat[cat]) byCat[cat] = emptyBucketCounts();
+      const o = clamp01(e && e.result && e.result.overall);
+      const bi = bucketIndex01(o);
+      if (bi == null) continue;
+      byCat[cat][bi] += 1;
     }
-    return Object.keys(buckets).map((k) => {
-      const b = buckets[k];
-      const avg = b.nOverall ? b.sumOverall / b.nOverall : null;
-      return { category: k, count: b.count, avgOverall: avg };
+    const rows = Object.keys(byCat).map((k) => ({ cat: k, counts: byCat[k] }));
+    // Sort categories by total count desc
+    rows.sort((a, b) => {
+      const ta = a.counts.reduce((x, y) => x + y, 0);
+      const tb = b.counts.reduce((x, y) => x + y, 0);
+      return tb - ta;
     });
-  }
-
-  function downloadJson(filename, obj) {
-    const s = JSON.stringify(obj, null, 2);
-    const blob = new Blob([s], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 250);
-  }
-
-  function applyFilters(events) {
-    const days = parseInt(($("biRangeDays") && $("biRangeDays").value) || "30", 10);
-    const hazardKey = ($("biHazardKey") && $("biHazardKey").value) || "overall";
-    const minOverall = parseFloat(($("biMinOverall") && $("biMinOverall").value) || "0");
-    const maxOverall = parseFloat(($("biMaxOverall") && $("biMaxOverall").value) || "1");
-
-    const now = Date.now();
-    const cutoff = now - days * 24 * 60 * 60 * 1000;
-
-    return events
-      .filter((e) => {
-        const d = parseTs(e.ts);
-        if (!d) return false;
-        return d.getTime() >= cutoff;
-      })
-      .filter((e) => {
-        const o = e.result && typeof e.result.overall === "number" ? e.result.overall : null;
-        if (typeof o !== "number") return false;
-        return o >= minOverall && o <= maxOverall;
-      })
-      .map((e) => {
-        // computed metric to sort by
-        let metric = null;
-        if (hazardKey === "overall") {
-          metric = e.result && typeof e.result.overall === "number" ? e.result.overall : null;
-        } else {
-          const ph = (e.result && e.result.perHazard) || [];
-          const hit = ph.find((x) => x.hazard === hazardKey);
-          metric = hit && typeof hit.risk === "number" ? hit.risk : null;
-        }
-        return { e, metric };
-      })
-      .filter((x) => typeof x.metric === "number");
+    return rows;
   }
 
   function render() {
-    if (!global.AnalyticsStore) return;
-    const all = global.AnalyticsStore.loadEvents();
-    const filtered = applyFilters(all);
-    const events = filtered.map((x) => x.e);
-    const agg = computeAgg(events);
+    const sec = $("bi");
+    if (sec) sec.setAttribute("data-loading", "1");
 
-    // KPIs
-    $("biKpiCount").textContent = String(agg.n);
-    $("biKpiAvgOverall").textContent = fmtPct(agg.avgOverall);
-    $("biKpiAvgSens").textContent = fmtPct(agg.avgSens);
-    $("biKpiAvgAdapt").textContent = fmtPct(agg.avgAdapt);
+    // No filters: fetch a wide window (up to ~10 years) for platform-wide stats.
+    return fetch(`/api/events?days=3650`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((all) => {
+        const events = Array.isArray(all) ? all : [];
+        const agg = computeAgg(events);
 
-    // Bands
-    const bandRows = Object.keys(agg.byBand)
-      .map((k) => ({ label: k, value: agg.byBand[k] }))
-      .sort((a, b) => b.value - a.value);
-    const bandMax = bandRows.length ? bandRows[0].value : 0;
-    renderBars($("biBands"), bandRows, bandMax);
+        // KPIs
+        $("biKpiCount").textContent = String(agg.n);
+        $("biKpiAvgOverall").textContent = fmtPct(agg.avgOverall);
+        $("biKpiAvgSens").textContent = fmtPct(agg.avgSens);
+        $("biKpiAvgAdapt").textContent = fmtPct(agg.avgAdapt);
 
-    // Sources
-    const srcRows = Object.keys(agg.bySource)
-      .map((k) => ({ label: k, value: agg.bySource[k] }))
-      .sort((a, b) => b.value - a.value);
-    const srcMax = srcRows.length ? srcRows[0].value : 0;
-    renderBars($("biSources"), srcRows, srcMax);
+        // Risk intervals (overall + each hazard)
+        const intervals = computeIntervals(events);
+        const riskEl = $("biRiskIntervals");
+        if (riskEl) {
+          riskEl.innerHTML = [
+            renderStackedRow("Overall", intervals.overall),
+            renderStackedRow("Heat", intervals.heat),
+            renderStackedRow("Flood", intervals.flood),
+            renderStackedRow("Wildfire", intervals.wildfire),
+            renderStackedRow("Drought", intervals.drought),
+            renderStackedRow("Coastal storm", intervals.coastal_storm),
+          ].join("");
+        }
 
-    // Timeline (last N days)
-    const dayKeys = Object.keys(agg.byDay).sort();
-    const last = dayKeys.slice(-14);
-    const tRows = last.map((k) => ({ label: k.slice(5), value: agg.byDay[k] }));
-    const tMax = tRows.reduce((m, r) => Math.max(m, r.value), 0);
-    renderBars($("biTimeline"), tRows, tMax);
-
-    // Top events table
-    const top = agg.top;
-    $("biTop").innerHTML = top
-      .map((t) => {
-        const e = t.e;
-        const loc = e.loc || {};
-        const overall = e.result && typeof e.result.overall === "number" ? e.result.overall : null;
-        const d = parseTs(e.ts);
-        const ts = d ? d.toLocaleString() : e.ts;
-        const lat = typeof loc.lat === "number" ? loc.lat.toFixed(4) : "—";
-        const lon = typeof loc.lon === "number" ? loc.lon.toFixed(4) : "—";
-        return `
-          <div class="bi-table__row">
-            <div class="bi-table__cell bi-mono">${ts}</div>
-            <div class="bi-table__cell">${loc.source || "—"}</div>
-            <div class="bi-table__cell">${loc.name || "—"}</div>
-            <div class="bi-table__cell bi-mono">${lat}, ${lon}</div>
-            <div class="bi-table__cell bi-right"><strong>${fmtPct(overall)}</strong></div>
-            <div class="bi-table__cell bi-right bi-mono">${fmtNum(e.hazards && e.hazards.heat)}</div>
-            <div class="bi-table__cell bi-right bi-mono">${fmtNum(e.hazards && e.hazards.flood)}</div>
-            <div class="bi-table__cell bi-right bi-mono">${fmtNum(e.hazards && e.hazards.wildfire)}</div>
-            <div class="bi-table__cell bi-right bi-mono">${fmtNum(e.hazards && e.hazards.drought)}</div>
-            <div class="bi-table__cell bi-right bi-mono">${fmtNum(e.hazards && e.hazards.coastal_storm)}</div>
-          </div>
-        `;
+        // Per-questionnaire-item overall distribution
+        const plotsEl = $("biProfileIntervalPlots");
+        if (plotsEl) {
+          plotsEl.innerHTML = PROFILE_FIELDS.map((f) => {
+            const rows = computeProfileIntervalPlot(events, f.key);
+            const inner =
+              rows.length === 0
+                ? '<p class="muted" style="margin:0.25rem 0 0">No data yet.</p>'
+                : rows
+                    .slice(0, 12)
+                    .map((r) => renderStackedRow(r.cat, r.counts))
+                    .join("");
+            const note =
+              rows.length > 12
+                ? `<p class="muted" style="margin:0.5rem 0 0">Showing top 12 categories by count.</p>`
+                : "";
+            return `
+              <details class="bi-factor" ${f.key === "ageBand" ? "open" : ""}>
+                <summary class="bi-factor__summary">${f.label}</summary>
+                <div class="bi-factor__body">${inner}${note}</div>
+              </details>
+            `;
+          }).join("");
+        }
       })
-      .join("");
-
-    // Profile breakdown
-    const profileKeyEl = $("biProfileKey");
-    const profileSortEl = $("biProfileSort");
-    const profileKey = profileKeyEl ? profileKeyEl.value : "ageBand";
-    const sortMode = profileSortEl ? profileSortEl.value : "count";
-    const dist = computeProfileBreakdown(events, profileKey);
-    dist.sort((a, b) => {
-      if (sortMode === "avgOverall") {
-        const av = typeof a.avgOverall === "number" ? a.avgOverall : -1;
-        const bv = typeof b.avgOverall === "number" ? b.avgOverall : -1;
-        return bv - av;
-      }
-      return b.count - a.count;
-    });
-    const rows = dist.map((d) => ({
-      label: d.category,
-      value: d.count,
-      note: `Avg overall ${fmtPct(d.avgOverall)}`,
-    }));
-    const max = rows.reduce((m, r) => Math.max(m, r.value), 0);
-    renderBars($("biProfileDist"), rows, max);
+      .catch(() => {
+        // API unavailable or blocked: keep UI stable.
+        $("biKpiCount").textContent = "—";
+        $("biKpiAvgOverall").textContent = "—";
+        $("biKpiAvgSens").textContent = "—";
+        $("biKpiAvgAdapt").textContent = "—";
+      })
+      .finally(() => {
+        if (sec) sec.removeAttribute("data-loading");
+      });
   }
 
   function bind() {
-    const btnShow = $("btnShowBI2");
     const sec = $("bi");
-    if (btnShow && sec) {
-      btnShow.addEventListener("click", function () {
-        sec.hidden = !sec.hidden;
-        if (!sec.hidden) {
-          render();
-          sec.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      });
-    }
-
-    ["biRangeDays", "biHazardKey", "biMinOverall", "biMaxOverall"].forEach((id) => {
-      const el = $(id);
-      if (!el) return;
-      el.addEventListener("change", render);
-      el.addEventListener("input", render);
+    // Use event delegation because the open button only appears after results are shown.
+    document.addEventListener("click", function (ev) {
+      const t = ev && ev.target;
+      const btn = t && t.closest ? t.closest("#btnShowBI2") : null;
+      if (!btn || !sec) return;
+      sec.hidden = !sec.hidden;
+      if (!sec.hidden) {
+        render();
+        // Scroll after layout so the browser "zooms" to the BI frame reliably.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            try {
+              sec.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch (e) {}
+            try {
+              sec.classList.remove("bi--focus");
+              void sec.offsetWidth;
+              sec.classList.add("bi--focus");
+              setTimeout(() => sec.classList.remove("bi--focus"), 1400);
+            } catch (e) {}
+            // Move focus into the dashboard for keyboard + screen readers.
+            try {
+              const first = document.getElementById("biRangeDays");
+              if (first && first.focus) first.focus({ preventScroll: true });
+            } catch (e) {}
+          });
+        });
+      }
     });
 
-    // Populate profile fields selector
-    const pf = $("biProfileKey");
-    if (pf) {
-      pf.innerHTML = PROFILE_FIELDS.map((f) => `<option value="${f.key}">${f.label}</option>`).join(
-        ""
-      );
-      if (!pf.value) pf.value = PROFILE_FIELDS[0].key;
-      pf.addEventListener("change", render);
-    }
-    const ps = $("biProfileSort");
-    if (ps) {
-      ps.addEventListener("change", render);
-    }
-
-    const btnExport = $("btnExportAnalytics");
-    if (btnExport) {
-      btnExport.addEventListener("click", function () {
-        if (!global.AnalyticsStore) return;
-        const data = global.AnalyticsStore.exportJson();
-        downloadJson("climate-change-me_analytics.json", data);
-      });
-    }
-
-    const importEl = $("biImportFile");
-    if (importEl) {
-      importEl.addEventListener("change", function () {
-        const file = importEl.files && importEl.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function () {
-          try {
-            const parsed = JSON.parse(String(reader.result || "[]"));
-            if (!global.AnalyticsStore || !global.AnalyticsStore.importMerge) return;
-            const r = global.AnalyticsStore.importMerge(parsed);
-            if (!r || !r.ok) {
-              alert("Import failed. Please select a valid exported analytics JSON file.");
-              return;
-            }
-            alert(`Imported ${r.added} new events. Total events: ${r.total}.`);
-            render();
-          } catch (e) {
-            alert("Import failed. Please select a valid exported analytics JSON file.");
-          } finally {
-            // allow re-importing the same file
-            importEl.value = "";
-          }
-        };
-        reader.onerror = function () {
-          alert("Could not read the selected file.");
-          importEl.value = "";
-        };
-        reader.readAsText(file);
-      });
-    }
-
-    const btnClear = $("btnClearAnalytics");
-    if (btnClear) {
-      btnClear.addEventListener("click", function () {
-        if (!global.AnalyticsStore) return;
-        const ok = confirm("Clear local analytics events for this browser?");
-        if (!ok) return;
-        global.AnalyticsStore.clear();
-        render();
-      });
-    }
+    // No filters + no local export/import/clear: BI is platform-wide from the server API.
 
     try {
       global.addEventListener("ccm:analytics_updated", function () {

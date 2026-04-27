@@ -61,7 +61,8 @@
 
   function setForm(f) {
     $("f_ageBand").value = f.ageBand;
-    $("f_sex").value = f.sex || "any";
+    // Sex is required in the UI (no "Prefer not to say" option).
+    $("f_sex").value = f.sex || "f";
     $("f_education").value = f.education;
     $("f_incomeBand").value = f.incomeBand;
     $("f_housingType").value = f.housingType;
@@ -76,6 +77,47 @@
     $("f_mobility").value = f.mobility;
     $("f_insurance").checked = !!f.insurance;
     $("f_digitalAccess").value = f.digitalAccess;
+  }
+
+  function selectHasValue(selectEl, value) {
+    if (!selectEl) return false;
+    const opts = selectEl.options || [];
+    for (let i = 0; i < opts.length; i++) {
+      if (opts[i] && opts[i].value === value) return true;
+    }
+    return false;
+  }
+
+  function validateRequiredSelect(id) {
+    const el = $(id);
+    if (!el) return { ok: false, id, reason: "missing-element" };
+    const v = el.value;
+    if (typeof v !== "string" || v.trim() === "") return { ok: false, id, reason: "empty" };
+    if (!selectHasValue(el, v)) return { ok: false, id, reason: "invalid" };
+    return { ok: true, id };
+  }
+
+  function validateQuestionnaire() {
+    // All questionnaire fields must be present & valid before computing.
+    const required = [
+      "f_ageBand",
+      "f_sex",
+      "f_education",
+      "f_incomeBand",
+      "f_housingType",
+      "f_floorLevel",
+      "f_occupation",
+      "f_socialSupport",
+      "f_healthChronic",
+      "f_mobility",
+      "f_digitalAccess",
+    ];
+
+    for (let i = 0; i < required.length; i++) {
+      const r = validateRequiredSelect(required[i]);
+      if (!r.ok) return r;
+    }
+    return { ok: true };
   }
 
   function municipalityList() {
@@ -429,6 +471,17 @@
       return;
     }
 
+    const vq = validateQuestionnaire();
+    if (!vq.ok) {
+      alert("Please complete all questionnaire fields before consulting your risk.");
+      try {
+        const el = $(vq.id);
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (el && el.focus) el.focus({ preventScroll: true });
+      } catch (e) {}
+      return;
+    }
+
     const form = getForm();
     let lat;
     let lon;
@@ -452,7 +505,15 @@
     } else {
       const mid = $("municipality").value;
       const m = municipalityById(mid);
-      if (!m) return;
+      if (!m) {
+        alert("Please select a municipality before consulting your risk.");
+        try {
+          const el = $("municipality");
+          if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (el && el.focus) el.focus({ preventScroll: true });
+        } catch (e) {}
+        return;
+      }
       lat = m.lat;
       lon = m.lon;
       name = m.name;
@@ -484,13 +545,120 @@
 
     const result = window.RiskEnginePT.computeAll(locationModel, form);
     renderResults(result);
+    // Send event to global analytics API (platform-wide BI).
+    try {
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          v: 1,
+          ts: new Date().toISOString(),
+          loc: {
+            id: locationModel.id,
+            source: locationModel.locationSource,
+            name: locationModel.name,
+            district: locationModel.district,
+            lat: locationModel.lat,
+            lon: locationModel.lon,
+          },
+          hazards: locationModel.hazards,
+          profile: form,
+          result: {
+            overall: result.overall,
+            sensitivity: result.sensitivity,
+            adaptiveCapacity: result.adaptiveCapacity,
+            perHazard: result.perHazard,
+          },
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
 
-    // Persist calculation for statistics/BI purposes (local-only).
-    if (window.AnalyticsStore && window.AnalyticsStore.isAvailable && window.AnalyticsStore.isAvailable()) {
-      try {
-        window.AnalyticsStore.logComputation(locationModel, form, result);
-      } catch (e) {}
-    }
+  function resetAssessment() {
+    // Clear profile selector
+    try {
+      $("exampleProfile").value = "";
+    } catch (e) {}
+
+    // Reset questionnaire selects to their first option
+    [
+      "f_ageBand",
+      "f_sex",
+      "f_education",
+      "f_incomeBand",
+      "f_housingType",
+      "f_floorLevel",
+      "f_occupation",
+      "f_socialSupport",
+      "f_healthChronic",
+      "f_mobility",
+      "f_digitalAccess",
+    ].forEach((id) => {
+      const el = $(id);
+      if (!el || !el.options || el.options.length === 0) return;
+      el.value = el.options[0].value;
+    });
+
+    // Reset questionnaire checkboxes
+    ["f_hasAC", "f_hasCoolRoomAccess", "f_outdoorWork", "f_livesAlone", "f_insurance"].forEach(
+      (id) => {
+        const el = $(id);
+        if (!el) return;
+        el.checked = false;
+      }
+    );
+
+    // Reset location to default municipality (Lisboa) and clear manual coords
+    try {
+      $("municipality").value = "1106";
+    } catch (e) {}
+    try {
+      const m = municipalityById("1106") || municipalityList()[0];
+      if (m) {
+        $("lat").value = m.lat.toFixed(5);
+        $("lon").value = m.lon.toFixed(5);
+        if (mapReady && marker) {
+          marker.setLatLng([m.lat, m.lon]);
+          try {
+            map.panTo([m.lat, m.lon], { animate: true });
+          } catch (e) {}
+        }
+      } else {
+        $("lat").value = "";
+        $("lon").value = "";
+      }
+    } catch (e) {}
+
+    // Hide results + BI and clear rendered contents
+    try {
+      $("results").hidden = true;
+      $("biCta").hidden = true;
+    } catch (e) {}
+    try {
+      $("bi").hidden = true;
+    } catch (e) {}
+    try {
+      $("drivers").innerHTML = "";
+      $("perHazard").innerHTML = "";
+      $("lanes").innerHTML = "";
+    } catch (e) {}
+    try {
+      $("overallScore").textContent = "0";
+      $("overallBand").textContent = "Pending";
+      $("locName").textContent = "";
+      $("locCoords").textContent = "";
+    } catch (e) {}
+
+    // Clear grid footprint rectangle (if any)
+    try {
+      if (gridFootprintLayer) gridFootprintLayer.clearLayers();
+    } catch (e) {}
+
+    // Scroll back to questionnaire for a clean restart
+    try {
+      const sec = $("btnCompute");
+      if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch (e) {}
   }
 
   function onProfileChange() {
@@ -505,6 +673,8 @@
     fillMunicipalities();
     fillProfiles();
     $("btnCompute").addEventListener("click", compute);
+    const btnReset = $("btnReset");
+    if (btnReset) btnReset.addEventListener("click", resetAssessment);
     $("exampleProfile").addEventListener("change", onProfileChange);
     $("municipality").addEventListener("change", onMunicipalityChange);
     $("btnGeolocate").addEventListener("click", onGeolocate);

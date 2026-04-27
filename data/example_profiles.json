@@ -5,7 +5,7 @@
       "label": "Maximum risk stress-test profile",
       "form": {
         "ageBand": "65+",
-        "sex": "any",
+        "sex": "f",
         "education": "basic",
         "incomeBand": "low",
         "housingType": "house",
@@ -27,7 +27,7 @@
       "label": "Older adult, low income, no AC, respiratory condition, limited mobility",
       "form": {
         "ageBand": "65+",
-        "sex": "any",
+        "sex": "m",
         "education": "basic",
         "incomeBand": "low",
         "housingType": "apartment",
@@ -48,8 +48,8 @@
       "id": "outdoor-worker-insured",
       "label": "Outdoor worker, medium income, house with AC, full mobility",
       "form": {
-        "ageBand": "35-64",
-        "sex": "any",
+        "ageBand": "35-49",
+        "sex": "m",
         "education": "secondary",
         "incomeBand": "medium",
         "housingType": "house",
@@ -71,7 +71,7 @@
       "label": "Rural / forestry work, cardiovascular condition, strong social ties",
       "form": {
         "ageBand": "50-64",
-        "sex": "any",
+        "sex": "m",
         "education": "secondary",
         "incomeBand": "medium",
         "housingType": "house",
@@ -93,7 +93,7 @@
       "label": "Young adult, higher education, apartment, indoor work",
       "form": {
         "ageBand": "18-34",
-        "sex": "any",
+        "sex": "f",
         "education": "higher",
         "incomeBand": "medium",
         "housingType": "apartment",
@@ -114,8 +114,8 @@
       "id": "outdoor-low-support",
       "label": "Outdoor job, low income, weak support, no home cooling",
       "form": {
-        "ageBand": "35-64",
-        "sex": "any",
+        "ageBand": "35-49",
+        "sex": "m",
         "education": "secondary",
         "incomeBand": "low",
         "housingType": "apartment",
@@ -137,7 +137,7 @@
       "label": "Higher income, insured, indoor work, strong support network",
       "form": {
         "ageBand": "50-64",
-        "sex": "any",
+        "sex": "f",
         "education": "higher",
         "incomeBand": "high",
         "housingType": "house",

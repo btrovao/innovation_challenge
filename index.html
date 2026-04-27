@@ -220,9 +220,8 @@
             </select>
           </div>
           <div>
-            <label for="f_sex">Sex (optional)</label>
+            <label for="f_sex">Sex</label>
             <select id="f_sex">
-              <option value="any">Prefer not to say</option>
               <option value="f">Female</option>
               <option value="m">Male</option>
             </select>
@@ -319,6 +318,9 @@
         </div>
         <p style="margin-top: 1.25rem">
           <button type="button" class="btn" id="btnCompute">Calculate risk and measures</button>
+          <button type="button" class="btn btn--ghost" id="btnReset" style="margin-left: 0.5rem">
+            Clear answers
+          </button>
         </p>
       </section>
 
@@ -344,7 +346,7 @@
         <p class="muted" id="locCoords"></p>
         <h3 style="font-size: 1rem; margin-top: 1rem">Profile factors</h3>
         <ul id="drivers"></ul>
-        <h3 style="font-size: 1rem; margin-top: 1rem">Risk by hazard (illustrative)</h3>
+        <h3 style="font-size: 1rem; margin-top: 1rem">Risk by hazard</h3>
         <div id="perHazard"></div>
         <h3 style="font-size: 1rem; margin-top: 1.5rem">Anticipatory action plan</h3>
         <p class="muted" style="margin-bottom: 1rem">
@@ -357,47 +359,13 @@
       <section class="card" id="bi" hidden>
         <h2>Statistics dashboard (BI)</h2>
         <p class="muted" style="margin-top: 0">
-          This dashboard uses <strong>local</strong> logs saved in your browser for demo/statistics
-          purposes. It is not shared unless you export it.
+          This dashboard shows <strong>platform-wide</strong> statistics aggregated across all saved
+          assessments.
         </p>
-
-        <div class="grid grid-2" style="margin-top: 1rem">
-          <div>
-            <label for="biRangeDays">Time range</label>
-            <select id="biRangeDays">
-              <option value="7">Last 7 days</option>
-              <option value="30" selected>Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="365">Last 365 days</option>
-            </select>
-          </div>
-          <div>
-            <label for="biHazardKey">Rank by</label>
-            <select id="biHazardKey">
-              <option value="overall" selected>Overall risk</option>
-              <option value="heat">Heat risk</option>
-              <option value="flood">Flood risk</option>
-              <option value="wildfire">Wildfire risk</option>
-              <option value="drought">Drought risk</option>
-              <option value="coastal_storm">Coastal storm risk</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-2" style="margin-top: 0.75rem">
-          <div>
-            <label for="biMinOverall">Min overall (0–1)</label>
-            <input type="number" id="biMinOverall" step="0.05" min="0" max="1" value="0" />
-          </div>
-          <div>
-            <label for="biMaxOverall">Max overall (0–1)</label>
-            <input type="number" id="biMaxOverall" step="0.05" min="0" max="1" value="1" />
-          </div>
-        </div>
 
         <div class="bi-kpis">
           <div class="bi-kpi">
-            <div class="bi-kpi__label">Events (filtered)</div>
+            <div class="bi-kpi__label">Assessments</div>
             <div class="bi-kpi__value" id="biKpiCount">0</div>
           </div>
           <div class="bi-kpi">
@@ -414,80 +382,44 @@
           </div>
         </div>
 
-        <div class="grid grid-2" style="margin-top: 1rem">
-          <div>
-            <h3 class="bi-subtitle">Risk bands</h3>
-            <div id="biBands" class="bi-bars"></div>
-          </div>
-          <div>
-            <h3 class="bi-subtitle">Location source</h3>
-            <div id="biSources" class="bi-bars"></div>
-          </div>
-        </div>
-
         <div style="margin-top: 1rem">
-          <h3 class="bi-subtitle">Timeline (last 14 days)</h3>
-          <div id="biTimeline" class="bi-bars"></div>
-        </div>
-
-        <div style="margin-top: 1rem">
-          <h3 class="bi-subtitle">Profile breakdown</h3>
+          <h3 class="bi-subtitle">Profiles per risk interval</h3>
           <p class="muted" style="margin-top: 0.25rem">
-            Distribution of logged profile fields (filtered) and the average overall risk per
-            category.
+            Distribution of assessments across risk intervals for <strong>overall</strong> and each
+            <strong>hazard</strong>.
           </p>
-          <div class="grid grid-2" style="margin-top: 0.5rem">
-            <div>
-              <label for="biProfileKey">Profile field</label>
-              <select id="biProfileKey"></select>
-            </div>
-            <div>
-              <label for="biProfileSort">Sort</label>
-              <select id="biProfileSort">
-                <option value="count" selected>By count</option>
-                <option value="avgOverall">By avg overall risk</option>
-              </select>
-            </div>
-          </div>
-          <div id="biProfileDist" class="bi-bars" style="margin-top: 0.65rem"></div>
+          <div id="biRiskIntervals" class="bi-stacks" style="margin-top: 0.65rem"></div>
         </div>
 
-        <div class="bi-actions">
-          <button type="button" class="btn btn--ghost btn--small" id="btnExportAnalytics">
-            Export JSON
-          </button>
-          <label class="btn btn--ghost btn--small" for="biImportFile">
-            Import / merge JSON
-          </label>
-          <input
-            type="file"
-            id="biImportFile"
-            accept="application/json"
-            style="display: none"
-          />
-          <button type="button" class="btn btn--ghost btn--small" id="btnClearAnalytics">
-            Clear local logs
-          </button>
+        <div style="margin-top: 1rem">
+          <h3 class="bi-subtitle">Overall risk distribution by profile factor</h3>
+          <p class="muted" style="margin-top: 0.25rem">
+            For each questionnaire item, see how categories map into overall risk intervals.
+          </p>
+          <div id="biProfileIntervalPlots" style="margin-top: 0.65rem"></div>
         </div>
+
+        <p class="muted" style="margin-top: 1rem">
+          Statistics update automatically as new assessments are performed.
+        </p>
       </section>
 
       <!-- Methodology + technical file details moved to README.md to keep the UI pitch-focused. -->
     </main>
 
     <footer>
-      NOVA IMS Innovation Challenge 2026. Run locally with a simple HTTP server so JSON can load
-      via <code>fetch</code>: <code>python -m http.server 8080</code>
+      NOVA IMS Innovation Challenge 2026. Run locally with the platform server (enables global BI):
+      <code>.\serve.ps1</code> or <code>python server.py</code>
       <br />
       <a href="readme.html" class="muted">Methodology & technical notes (README)</a>
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src="data/embeddedData.js?v=20260420b"></script>
+    <script src="data/embeddedData.js?v=20260427d"></script>
     <script src="js/climateGridSampler.js?v=20260420b"></script>
     <script src="js/riskEngine.js?v=20260420b"></script>
     <script src="js/hazardMapLayers.js?v=20260420b"></script>
-    <script src="js/analyticsStore.js?v=20260424a"></script>
-    <script src="js/biDashboard.js?v=20260424a"></script>
-    <script src="js/app.js?v=20260424a"></script>
+    <script src="js/biDashboard.js?v=20260427e"></script>
+    <script src="js/app.js?v=20260427e"></script>
   </body>
 </html>

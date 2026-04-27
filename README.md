@@ -14,8 +14,8 @@ globally to any gridded climate dataset (regional models, reanalysis, downscaled
   - **Overall risk score**
   - **Risk per hazard**
   - A **prioritised action plan** (early warnings → immediate action → preparedness → adaptation)
-- Each computation can be optionally **logged locally** for demo analytics and displayed in a
-  built-in **BI dashboard**.
+- Each computation is logged to a **shared analytics store** (server + database) so the BI dashboard
+  shows **platform-wide** statistics.
 
 ## Methodology (end-to-end)
 
@@ -144,17 +144,28 @@ Continental Portugal envelope constants (example region):
 
 ## Run locally
 
-Because the app uses `fetch()` for JSON, run it via a local HTTP server (not `file://`).
+Use the built-in platform server so the **global statistics (BI)** can log to a shared database.
 
-From the repo root:
+From the repo root (PowerShell):
+
+```powershell
+.\serve.ps1
+```
+
+Or directly:
 
 ```bash
-python -m http.server 8080
+python server.py
 ```
 
 Then open:
 
 - `http://localhost:8080/`
+
+### Note about global BI
+
+If you run `python -m http.server`, the BI will **not** work because `/api/events` requires a server
+that supports `POST` and stores events (this repo uses `server.py` + SQLite).
 
 ## Repository structure (key files)
 
