@@ -200,15 +200,45 @@
     return rows;
   }
 
+  function setBiDataScope(mode) {
+    const el = $("biDataScope");
+    if (!el) return;
+    if (mode === "local") {
+      el.style.display = "";
+      el.innerHTML =
+        "Showing assessments saved <strong>in this browser only</strong> (no server statistics API). " +
+        "With Redis/KV configured on Vercel, this switches to <strong>platform-wide</strong> counts.";
+    } else {
+      el.style.display = "none";
+      el.textContent = "";
+    }
+  }
+
   function render() {
     const sec = $("bi");
     if (sec) sec.setAttribute("data-loading", "1");
 
-    // No filters: fetch a wide window (up to ~10 years) for platform-wide stats.
+    // Prefer server API; fall back to localStorage (same behaviour as older static deployments).
     return fetch(`/api/events?days=3650`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((all) => {
-        const events = Array.isArray(all) ? all : [];
+      .then(function (r) {
+        if (r && r.ok) {
+          return r.json().then(function (data) {
+            return {
+              events: Array.isArray(data) ? data : [],
+              mode: "server",
+            };
+          });
+        }
+        throw new Error("bi_api_unavailable");
+      })
+      .catch(function () {
+        const fn = window.AnalyticsStore && window.AnalyticsStore.loadEvents;
+        const local = typeof fn === "function" ? fn(3650) : [];
+        return { events: Array.isArray(local) ? local : [], mode: "local" };
+      })
+      .then(function (pack) {
+        setBiDataScope(pack.mode);
+        const events = pack.events || [];
         const agg = computeAgg(events);
 
         // KPIs
@@ -257,7 +287,6 @@
         }
       })
       .catch(() => {
-        // API unavailable or blocked: keep UI stable.
         $("biKpiCount").textContent = "—";
         $("biKpiAvgOverall").textContent = "—";
         $("biKpiAvgSens").textContent = "—";
@@ -300,7 +329,7 @@
       }
     });
 
-    // No filters + no local export/import/clear: BI is platform-wide from the server API.
+    // No filters: primary source is server API; optional browser fallback for static hosts.
 
     try {
       global.addEventListener("ccm:analytics_updated", function () {

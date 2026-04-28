@@ -86,38 +86,25 @@ Lanes:
 - Preparedness
 - Climate adaptation
 
-### 5) BI logging (statistics for demos)
+### 5) BI logging (platform-wide statistics)
 
-Each click on **Calculate risk and measures** can be logged locally (browser-only) for statistics:
+Each successful assessment POSTs an event JSON payload to **`/api/events`**:
 
-- Storage: `localStorage`
-- Module: `js/analyticsStore.js`
-- Dashboard: `js/biDashboard.js`
+- **Local**: implemented by `server.py`, persisted in **`analytics.db`** (SQLite).
+- **Production (e.g. Vercel)**: implemented by **`api/events.js`**, persisted in **Redis/KV**
+  (`@upstash/redis`; configure REST URL/token env vars).
 
-**Important:** logs are stored *per browser* and *per origin* (domain + protocol + port). Deploying a
-new version does **not** delete logs, but switching domain (e.g. `localhost` → GitHub Pages) means
-each environment has its own separate storage. Users can also clear site data.
+The BI dashboard (`js/biDashboard.js`) reads **`GET /api/events?days=…`** when the API exists; if the
+request fails (static hosting), it falls back to **`js/analyticsStore.js`** (`localStorage`, this
+browser only) so charts still populate.
 
-Use **Export JSON** / **Import / merge JSON** in the BI dashboard to back up and restore logs.
+Logged payload contains (high level):
 
-Logged event contains (high level):
-
-- Timestamp
-- Session id (local)
-- Location (lat/lon, source)
-- Full questionnaire profile object
-- Sampled hazards
-- Risk outputs (overall + per hazard)
-- Sampling metadata
-
-The BI dashboard shows:
-
-- KPIs (event count, average overall, average sensitivity/adaptive capacity)
-- Distributions (risk bands, location source)
-- Timeline (daily counts)
-- Top-risk event list
-- Profile breakdown: distributions + avg overall per profile category
-- Export / clear local logs
+- Timestamp (`ts`)
+- Location (`loc`)
+- Sampled hazards (`hazards`)
+- Questionnaire profile (`profile`)
+- Risk outputs (`result`)
 
 ## Data pipeline (production-ready direction)
 
@@ -167,6 +154,27 @@ Then open:
 If you run `python -m http.server`, the BI will **not** work because `/api/events` requires a server
 that supports `POST` and stores events (this repo uses `server.py` + SQLite).
 
+## Deploy on Vercel (production BI)
+
+Vercel serves the static site, but it **does not run** `python server.py`. If you deploy as “static files
+only”, `GET/POST /api/events` would return **404** and nothing is saved.
+
+This repo includes a Vercel **Serverless Function** at `api/events.js` which implements the same
+endpoints using **Redis** (via `@upstash/redis`, compatible with **Vercel KV / Upstash** REST env vars).
+
+1. In Vercel, add a **Redis/KV** store (Upstash Redis, or Vercel KV) and ensure these env vars exist
+   on the project (names may vary slightly; the function checks common ones):
+   - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, **or**
+   - `KV_REST_API_URL` and `KV_REST_API_TOKEN`
+2. Redeploy. `GET https://<your-domain>/api/events?days=30` should return `200` with a JSON array
+   (possibly `[]` at first).
+3. Run an assessment in the app; then open the BI dashboard — counts should increase.
+
+If `/api/events` is **not** available (pure static hosting), the app falls back to **`localStorage`**
+via `js/analyticsStore.js`: BI shows statistics **for this browser only**, matching older deployments.
+
+Local development can still use `server.py` + `analytics.db` (no Redis required).
+
 ## Repository structure (key files)
 
 - `index.html`: UI
@@ -175,8 +183,11 @@ that supports `POST` and stores events (this repo uses `server.py` + SQLite).
 - `js/climateGridSampler.js`: bilinear point sampling on the hazard grid
 - `js/riskEngine.js`: risk model
 - `js/hazardMapLayers.js`: map overlays for hazard layers
-- `js/analyticsStore.js`: local analytics event store
+- `js/analyticsStore.js`: browser fallback store when `/api/events` is unavailable
 - `js/biDashboard.js`: BI dashboard renderer
+- `server.py`: local static server + SQLite analytics API (`analytics.db`)
+- `api/events.js`: production analytics API on Vercel (Redis/KV-backed)
+- `package.json`: Node dependency for `@upstash/redis` (Vercel build)
 - `data/*`: measure library, example profiles, grids, outline GeoJSON
 - `scripts/*`: grid generation and climate data conversion utilities
 

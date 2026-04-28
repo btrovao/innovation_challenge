@@ -545,32 +545,50 @@
 
     const result = window.RiskEnginePT.computeAll(locationModel, form);
     renderResults(result);
-    // Send event to global analytics API (platform-wide BI).
+    // Prefer server analytics; fall back to browser storage when /api/events is missing (static hosting).
+    var analyticsPayload = {
+      v: 1,
+      ts: new Date().toISOString(),
+      loc: {
+        id: locationModel.id,
+        source: locationModel.locationSource,
+        name: locationModel.name,
+        district: locationModel.district,
+        lat: locationModel.lat,
+        lon: locationModel.lon,
+      },
+      hazards: locationModel.hazards,
+      profile: form,
+      result: {
+        overall: result.overall,
+        sensitivity: result.sensitivity,
+        adaptiveCapacity: result.adaptiveCapacity,
+        perHazard: result.perHazard,
+      },
+    };
     try {
       fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          v: 1,
-          ts: new Date().toISOString(),
-          loc: {
-            id: locationModel.id,
-            source: locationModel.locationSource,
-            name: locationModel.name,
-            district: locationModel.district,
-            lat: locationModel.lat,
-            lon: locationModel.lon,
-          },
-          hazards: locationModel.hazards,
-          profile: form,
-          result: {
-            overall: result.overall,
-            sensitivity: result.sensitivity,
-            adaptiveCapacity: result.adaptiveCapacity,
-            perHazard: result.perHazard,
-          },
-        }),
-      }).catch(function () {});
+        body: JSON.stringify(analyticsPayload),
+      })
+        .then(function (r) {
+          if (r && r.ok) return;
+          if (
+            window.AnalyticsStore &&
+            window.AnalyticsStore.appendClientEvent &&
+            window.AnalyticsStore.appendClientEvent(analyticsPayload)
+          ) {
+            return;
+          }
+        })
+        .catch(function () {
+          try {
+            if (window.AnalyticsStore && window.AnalyticsStore.appendClientEvent) {
+              window.AnalyticsStore.appendClientEvent(analyticsPayload);
+            }
+          } catch (e2) {}
+        });
     } catch (e) {}
   }
 
